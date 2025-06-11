@@ -1,8 +1,8 @@
 const mongoose = require("mongoose");
-
+const databaseUrl = process.env.MONGODB_URL || "mongodb://0.0.0.0:27017"
 module.exports = () => {
   mongoose
-    .connect("mongodb://0.0.0.0:27017/gogetData")
+    .connect(`${databaseUrl}/gogetData`)
     .then(() => {
       console.log("MongoDB connected");
     })
