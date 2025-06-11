@@ -1,5 +1,5 @@
 const apiClient = require("../configs/axios");
-const { transporter } = require("../configs/nodemailer");
+const transporter = require("../configs/nodemailer");
 const orderDetails = require("../models/orderDetails");
 
 function parseCustomDate(dateString) {
