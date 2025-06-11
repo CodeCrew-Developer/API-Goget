@@ -1,0 +1,21 @@
+{
+  "name": "goget-api",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "dotenvx run -- node ./bin/www",
+    "dev": "dotenvx run -- nodemon ./bin/www"
+  },
+  "dependencies": {
+    "@dotenvx/dotenvx": "^1.44.1",
+    "axios": "^1.9.0",
+    "cookie-parser": "~1.4.4",
+    "cors": "^2.8.5",
+    "debug": "~2.6.9",
+    "express": "~4.16.1",
+    "joi": "^17.13.3",
+    "mongoose": "^8.15.1",
+    "morgan": "~1.9.1",
+    "nodemailer": "^7.0.3"
+  }
+}
