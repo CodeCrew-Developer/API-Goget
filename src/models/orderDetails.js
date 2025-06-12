@@ -36,6 +36,21 @@ const orderSchema = new mongoose.Schema(
           type: String,
         },
       },
+      fulfillmentOrderId: {
+        type: String,
+      },
+      lineItems: [
+        {
+          id: {
+            type: String,
+            required: true,
+          },
+          quantity: {
+            type: Number,
+            required: true,
+          },
+        },
+      ],
     },
     pickUpDateAndTime: {
       type: String,
@@ -45,7 +60,7 @@ const orderSchema = new mongoose.Schema(
     },
     job_status: {
       type: String,
-      enum: ["pending", "accepted", "picked_up", "delivered", "cancelled"],
+      enum: ["pending", "accepted", "picked_up", "completed", "cancelled"],
       default: "pending",
     },
   },
