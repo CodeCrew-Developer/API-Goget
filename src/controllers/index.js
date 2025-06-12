@@ -124,12 +124,12 @@ module.exports = {
     try {
       const data = req.body;
       switch (data.status) {
+        // case "cancelled":
+        //   await orderDetails.updateOne(
+        //     { job_id: data.id },
+        //     { job_status: "cancelled" }
+        //   );
         case "cancelled":
-          await orderDetails.updateOne(
-            { job_id: data.id },
-            { job_status: "cancelled" }
-          );
-        case "completed":
           const orderData = await orderDetails.findOne({
             job_id: data.id,
             status: { $ne: "completed" },
