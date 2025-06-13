@@ -9,9 +9,14 @@ const shopify = axios.create({
 });
 
 const shopifyApi = {
-    create: async ({fulfillmentOrderId, lineItems, trackingNumber, trackingUrl, trackingCompany}) => {
-        const mutation = `
-        mutation fulfillOrder($fulfillment: FulfillmentV2Input!) {
+  create: async ({
+    fulfillmentOrders,
+    trackingNumber,
+    trackingUrl,
+    trackingCompany,
+  }) => {
+    const mutation = `
+        mutation fulfillOrder($fulfillment: FulfillmentInput!) {
                 fulfillmentCreate(fulfillment: $fulfillment) {
                         fulfillment {
                                 id
@@ -30,32 +35,84 @@ const shopifyApi = {
         }
         `;
 
-        try {
-            const response = await shopify.post("/graphql.json", {
-                query: mutation,
-                variables: {
-                    fulfillment: {
-                        lineItemsByFulfillmentOrder: [
-                            {
-                                fulfillmentOrderId,
-                                fulfillmentOrderLineItems: lineItems,
-                            },
-                        ],
-                        trackingInfo: {
-                            number: trackingNumber,
-                            url: trackingUrl,
-                            company: trackingCompany
-                        }
-                    },
-                },
-            });
-            console.log("Fulfillment created successfully:", response.data);
-            return response.data.data.fulfillmentCreate;
-        } catch (error) {
-            console.error("Error creating fulfillment:", error);
-            throw error;
+    try {
+      const response = await shopify.post("/graphql.json", {
+        query: mutation,
+        variables: {
+          fulfillment: {
+            lineItemsByFulfillmentOrder: fulfillmentOrders,
+            trackingInfo: {
+              number: trackingNumber,
+              url: trackingUrl,
+              company: trackingCompany,
+            },
+          },
+        },
+      });
+      console.log("Fulfillment created successfully:", response.data);
+      return response.data?.data?.fulfillmentCreate;
+    } catch (error) {
+      console.error("Error creating fulfillment:", error);
+      throw error;
+    }
+  },
+  cancel: async ({ fulfillmentId }) => {
+    const mutation = `
+        mutation fulfillmentCancel($id: ID!) {
+            fulfillmentCancel(id: $id) {
+                fulfillment {
+                    id
+                    status
+                }
+                userErrors {
+                    field
+                    message
+                }
+            }
         }
-    },
+        `;
+
+    try {
+      const response = await shopify.post("/graphql.json", {
+        query: mutation,
+        variables: {
+          id: fulfillmentId,
+        },
+      });
+      console.log("Fulfillment cancelled successfully:", response.data);
+      return response.data.data.fulfillmentCancel;
+    } catch (error) {
+      console.error("Error cancelling fulfillment:", error);
+      throw error;
+    }
+  },
+  getShopDetails: async () => {
+    const query = `
+        query {
+            shop {
+                id
+                name
+                email
+                myshopifyDomain
+                primaryDomain {
+                    url
+                    host
+                }
+            }
+        }
+    `;
+
+    try {
+      const response = await shopify.post("/graphql.json", {
+        query: query,
+      });
+      console.log("Shop details retrieved successfully:", response.data);
+      return response.data.data.shop;
+    } catch (error) {
+      console.error("Error retrieving shop details:", error);
+      throw error;
+    }
+  },
 };
 
 module.exports = shopifyApi;

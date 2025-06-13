@@ -16,6 +16,12 @@ function parseCustomDate(dateString) {
 module.exports = {
   async jobCreate(req, res) {
     try {
+      const isAvailable = await orderDetails.find({
+          "order.id": req.body.order.id,
+      });
+      if (isAvailable.filter((item) => item.job_status !== "cancelled").length) {
+        return res.status(400).json({ error: "Order already exists" });
+      }
       const data = {
         pickup: {
           name: req.body.item,
@@ -47,6 +53,18 @@ module.exports = {
       const response = await apiClient.post("/jobs", data);
       const job = response.data.data.job;
       const customerEmail = req.body.order?.customer?.email || "";
+
+      const shopifyReponse = await shopifyApi.create({
+        fulfillmentOrders: req.body.order.fulfillmentOrders,
+        trackingNumber: job.tracking_id,
+        trackingUrl: job.tracking_url,
+        trackingCompany: "GoGet",
+      });
+
+      if (shopifyReponse?.userErrors && shopifyReponse?.userErrors.length > 0) {
+        throw new Error(shopifyReponse.userErrors[0].message);
+      }
+      const shopifyFulfillmentId = shopifyReponse.fulfillment.id;
       if (customerEmail) {
         await transporter.sendMail({
           from: process.env.EMAIL_FROM,
@@ -55,11 +73,13 @@ module.exports = {
           text: `Your order for ${req.body.item} has been created successfully. Your job ID is ${job.id}. Tracking url is ${job.tracking_url}.`,
         });
       }
+
       const orderData = {
         job_id: job.id,
         item: req.body.item,
         order: req.body.order,
         pickUpDateAndTime: parseCustomDate(req.body.pickUpDateAndTime),
+        fulfillmentId: shopifyFulfillmentId || "",
       };
 
       await orderDetails.create(orderData);
@@ -104,6 +124,12 @@ module.exports = {
       const jobId = req.params.id;
       const response = await apiClient.delete(`/jobs/${jobId}`);
       if (response.status === 200) {
+        const orderData = await orderDetails.findOne({
+          job_id: jobId,
+        });
+        await shopifyApi.cancel({
+          fulfillmentId: orderData.fulfillmentId,
+        });
         await orderDetails.updateOne(
           { job_id: jobId },
           { job_status: "cancelled" }
@@ -119,18 +145,24 @@ module.exports = {
         .json({ error: error.response?.data.data[0] || error.message });
     }
   },
-  async fullFilled() {},
   async webhook(req, res) {
     try {
       const data = req.body;
+      let orderData;
       switch (data.status) {
-        // case "cancelled":
-        //   await orderDetails.updateOne(
-        //     { job_id: data.id },
-        //     { job_status: "cancelled" }
-        //   );
         case "cancelled":
-          const orderData = await orderDetails.findOne({
+          orderData = await orderDetails.findOne({
+            job_id: data.id,
+          });
+          await shopifyApi.cancel({
+            fulfillmentId: orderData.fulfillmentId,
+          });
+          await orderDetails.updateOne(
+            { job_id: data.id },
+            { job_status: "cancelled" }
+          );
+        case "completed":
+          orderData = await orderDetails.findOne({
             job_id: data.id,
             status: { $ne: "completed" },
           });
@@ -138,18 +170,11 @@ module.exports = {
             console.log("No order found for job_id:", data.id);
             return;
           }
-          await shopifyApi.create({
-            fulfillmentOrderId: orderData.order.fulfillmentOrderId,
-            lineItems: orderData.order.lineItems.map((item) => ({
-              id: item.id,
-              quantity: item.quantity,
-            })),
-            trackingNumber: data.tracking_id,
-            trackingUrl: data.tracking_url,
-            trackingCompany: "GoGet",
-          });
-          
-          await orderDetails.updateOne({ job_id: data.id }, { job_status: "completed" });
+
+          await orderDetails.updateOne(
+            { job_id: data.id },
+            { job_status: "completed", dropOffDateAndTime: data.completed_at }
+          );
 
         default:
           console.log("Webhook received with data:", data);

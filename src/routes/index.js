@@ -13,14 +13,5 @@ router
   
 router.delete("/jobs/cancel/:id", controller.jobCancel);
 
-// api.create().then(() => {
-//   console.log("Fulfillment created successfully");
-// }).catch((error) => {
-//   console.error("Error creating fulfillment:", error);
-// });
-router.post("/webhook", function (req, res) {
-  console.log("Webhook method:", req.method);
-  console.log("Webhook received:", req.body);
-  res.status(200).send("Webhook received");
-});
+router.post("/webhook", controller.webhook);
 module.exports = router;

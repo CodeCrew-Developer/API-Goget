@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const database = require("../configs/database");
 
 const orderSchema = new mongoose.Schema(
   {
@@ -36,21 +35,28 @@ const orderSchema = new mongoose.Schema(
           type: String,
         },
       },
-      fulfillmentOrderId: {
-        type: String,
-      },
-      lineItems: [
+      fulfillmentOrders: [
         {
-          id: {
+          fulfillmentOrderId: {
             type: String,
-            required: true,
           },
-          quantity: {
-            type: Number,
-            required: true,
-          },
+          fullfillmentOrderLineItems: [
+            {
+              id: {
+                type: String,
+                required: true,
+              },
+              quantity: {
+                type: Number,
+                required: true,
+              },
+            },
+          ],
         },
       ],
+    },
+    fulfillmentId: {
+      type: String,
     },
     pickUpDateAndTime: {
       type: String,
