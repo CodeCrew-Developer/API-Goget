@@ -36,6 +36,7 @@ module.exports = {
       };
       const response = await apiClient.post("/jobs", data);
       const job = response.data.data.job;
+      console.log("Job created successfully:", job);
       const customerEmail = req.body.order?.customer?.email || "";
 
       const shopifyReponse = await shopifyApi.create({
