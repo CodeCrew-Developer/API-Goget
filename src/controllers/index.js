@@ -64,7 +64,7 @@ module.exports = {
         job_id: job.id,
         item: req.body.item,
         order: req.body.order,
-        pickUpDateAndTime: new Date(req.body.pickUpDateAndTime).toISOString(),
+        pickUpDateAndTime: moment(req.body.pickUpDateAndTime).tz('Asia/Kuala_Lumpur').format(),
         fulfillmentId: shopifyFulfillmentId || "",
       };
 
