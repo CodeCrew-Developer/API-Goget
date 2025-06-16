@@ -133,6 +133,7 @@ module.exports = {
     try {
       const data = req.body;
       let orderData;
+      console.log("Webhook received with data:", data);
       if (data.status === "cancelled") {
         orderData = await orderDetails.findOne({
           job_id: data.id,
@@ -158,16 +159,6 @@ module.exports = {
           { job_id: data.id },
           { job_status: "completed", dropOffDateAndTime: data.completed_at }
         );
-      } else if (data.status === "approved") {
-        orderData = await orderDetails.findOne({
-          job_id: data.id,
-          job_status: { $ne: "completed" },
-        });
-
-        await orderDetails.updateOne(
-          { job_id: data.id },
-          { job_status: "accepted" }
-        );
       } else if (data.status === "in_progress") {
         orderData = await orderDetails.findOne({
           job_id: data.id,
@@ -178,9 +169,20 @@ module.exports = {
           { job_id: data.id },
           { job_status: "in_progress" }
         );
+      } else if (data.status === "approved") {
+        orderData = await orderDetails.findOne({
+          job_id: data.id,
+          job_status: { $ne: "completed" },
+        });
+
+        await orderDetails.updateOne(
+          { job_id: data.id },
+          { job_status: "accepted" }
+        );
       } else {
         console.log("Webhook received with data:", data);
       }
+      res.status(200).json({ message: "Webhook processed successfully" });
     } catch (error) {
       console.error("Webhook error:", error);
     }
