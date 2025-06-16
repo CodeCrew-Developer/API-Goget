@@ -3,23 +3,9 @@ const apiClient = require("../configs/axios");
 const transporter = require("../configs/nodemailer");
 const orderDetails = require("../models/orderDetails");
 
-function parseCustomDate(dateString) {
-  const normalized =
-    dateString.includes(":") && dateString.split(":").length === 2
-      ? `${dateString}:00`
-      : dateString;
-
-  const isoString = normalized.replace(" ", "T") + "Z";
-  return new Date(isoString);
-}
-
 module.exports = {
   async jobCreate(req, res) {
     try {
-      const isAvailable = await orderDetails.find({
-        "order.id": req.body.order.id,
-      });
-
       const data = {
         pickup: {
           name: req.body.item,
@@ -27,7 +13,7 @@ module.exports = {
           location_lat: parseFloat(req.body.pickUpLatitude),
           location_long: parseFloat(req.body.pickUpLongitude),
           parking: false,
-          start_at: parseCustomDate(req.body.pickUpDateAndTime),
+          start_at: new Date(req.body.pickUpDateAndTime).toISOString(),
           reference: req.body.reference,
           location_notes: req.body.pickUpLocationNote,
         },
@@ -76,7 +62,7 @@ module.exports = {
         job_id: job.id,
         item: req.body.item,
         order: req.body.order,
-        pickUpDateAndTime: parseCustomDate(req.body.pickUpDateAndTime),
+        pickUpDateAndTime: new Date(req.body.pickUpDateAndTime).toISOString(),
         fulfillmentId: shopifyFulfillmentId || "",
       };
 
