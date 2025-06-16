@@ -17,9 +17,9 @@ module.exports = {
   async jobCreate(req, res) {
     try {
       const isAvailable = await orderDetails.find({
-          "order.id": req.body.order.id,
+        "order.id": req.body.order.id,
       });
-      
+
       const data = {
         pickup: {
           name: req.body.item,
@@ -171,6 +171,26 @@ module.exports = {
         await orderDetails.updateOne(
           { job_id: data.id },
           { job_status: "completed", dropOffDateAndTime: data.completed_at }
+        );
+      } else if (data.status === "approved") {
+        orderData = await orderDetails.findOne({
+          job_id: data.id,
+          job_status: { $ne: "completed" },
+        });
+
+        await orderDetails.updateOne(
+          { job_id: data.id },
+          { job_status: "accepted" }
+        );
+      } else if (data.status === "in_progress") {
+        orderData = await orderDetails.findOne({
+          job_id: data.id,
+          job_status: { $ne: "completed" },
+        });
+
+        await orderDetails.updateOne(
+          { job_id: data.id },
+          { job_status: "in_progress" }
         );
       } else {
         console.log("Webhook received with data:", data);

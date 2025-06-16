@@ -66,7 +66,7 @@ const orderSchema = new mongoose.Schema(
     },
     job_status: {
       type: String,
-      enum: ["pending", "accepted", "picked_up", "completed", "cancelled"],
+      enum: ["pending", "accepted", "in_progress", "completed", "cancelled"],
       default: "pending",
     },
   },
