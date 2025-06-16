@@ -147,35 +147,33 @@ module.exports = {
     try {
       const data = req.body;
       let orderData;
-      switch (data.status) {
-        case "cancelled":
-          orderData = await orderDetails.findOne({
-            job_id: data.id,
-          });
-          await shopifyApi.cancel({
-            fulfillmentId: orderData.fulfillmentId,
-          });
-          await orderDetails.updateOne(
-            { job_id: data.id },
-            { job_status: "cancelled" }
-          );
-        case "completed":
-          orderData = await orderDetails.findOne({
-            job_id: data.id,
-            status: { $ne: "completed" },
-          });
-          if (!orderData) {
-            console.log("No order found for job_id:", data.id);
-            return;
-          }
+      if (data.status === "cancelled") {
+        orderData = await orderDetails.findOne({
+          job_id: data.id,
+        });
+        await shopifyApi.cancel({
+          fulfillmentId: orderData.fulfillmentId,
+        });
+        await orderDetails.updateOne(
+          { job_id: data.id },
+          { job_status: "cancelled" }
+        );
+      } else if (data.status === "completed") {
+        orderData = await orderDetails.findOne({
+          job_id: data.id,
+          job_status: { $ne: "completed" },
+        });
+        if (!orderData) {
+          console.log("No order found for job_id:", data.id);
+          return;
+        }
 
-          await orderDetails.updateOne(
-            { job_id: data.id },
-            { job_status: "completed", dropOffDateAndTime: data.completed_at }
-          );
-
-        default:
-          console.log("Webhook received with data:", data);
+        await orderDetails.updateOne(
+          { job_id: data.id },
+          { job_status: "completed", dropOffDateAndTime: data.completed_at }
+        );
+      } else {
+        console.log("Webhook received with data:", data);
       }
     } catch (error) {
       console.error("Webhook error:", error);
