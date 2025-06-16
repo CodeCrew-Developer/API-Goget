@@ -19,9 +19,7 @@ module.exports = {
       const isAvailable = await orderDetails.find({
           "order.id": req.body.order.id,
       });
-      if (isAvailable.filter((item) => item.job_status !== "cancelled").length) {
-        return res.status(400).json({ error: "Order already exists" });
-      }
+      
       const data = {
         pickup: {
           name: req.body.item,
