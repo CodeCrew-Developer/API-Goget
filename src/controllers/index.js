@@ -2,10 +2,11 @@ const shopifyApi = require("../configs/shopify");
 const apiClient = require("../configs/axios");
 const transporter = require("../configs/nodemailer");
 const orderDetails = require("../models/orderDetails");
-
+const moment = require("moment-timezone");
 module.exports = {
   async jobCreate(req, res) {
     try {
+      console.log("Request body:", JSON.stringify(req.body));
       const data = {
         pickup: {
           name: req.body.item,
@@ -13,7 +14,7 @@ module.exports = {
           location_lat: parseFloat(req.body.pickUpLatitude),
           location_long: parseFloat(req.body.pickUpLongitude),
           parking: false,
-          start_at: new Date(req.body.pickUpDateAndTime).toISOString(),
+          start_at: moment(req.body.pickUpDateAndTime).tz('Asia/Kuala_Lumpur').format(),
           reference: req.body.reference,
           location_notes: req.body.pickUpLocationNote,
         },
