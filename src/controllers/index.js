@@ -3,6 +3,7 @@ const apiClient = require("../configs/axios");
 const transporter = require("../configs/nodemailer");
 const orderDetails = require("../models/orderDetails");
 const moment = require("moment-timezone");
+console.log(moment().add(10 ,"minutes"))
 module.exports = {
   async jobCreate(req, res) {
     try {
@@ -14,7 +15,7 @@ module.exports = {
           location_lat: parseFloat(req.body.pickUpLatitude),
           location_long: parseFloat(req.body.pickUpLongitude),
           parking: false,
-          start_at: moment(req.body.pickUpDateAndTime).tz('Asia/Kuala_Lumpur').format(),
+          start_at: moment(req.body.pickUpDateAndTime).format(),
           reference: req.body.reference,
           location_notes: req.body.pickUpLocationNote,
         },
@@ -64,7 +65,7 @@ module.exports = {
         job_id: job.id,
         item: req.body.item,
         order: req.body.order,
-        pickUpDateAndTime: moment(req.body.pickUpDateAndTime).tz('Asia/Kuala_Lumpur').format(),
+        pickUpDateAndTime: moment(req.body.pickUpDateAndTime).format(),
         fulfillmentId: shopifyFulfillmentId || "",
       };
 
