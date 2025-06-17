@@ -7,6 +7,7 @@ const moment = require("moment-timezone");
 module.exports = {
   async jobCreate(req, res) {
     try {
+      const startAt = moment.tz(req.body.pickUpDateAndTime, 'YYYY-MM-DD HH:mm', 'Asia/Singapore').utc().format()
       console.log("Request body:", JSON.stringify(req.body));
       const data = {
         pickup: {
@@ -15,7 +16,7 @@ module.exports = {
           location_lat: parseFloat(req.body.pickUpLatitude),
           location_long: parseFloat(req.body.pickUpLongitude),
           parking: false,
-          start_at: moment(req.body.pickUpDateAndTime).utc().format(),
+          start_at: startAt,
           reference: req.body.reference,
           location_notes: req.body.pickUpLocationNote,
         },
@@ -65,7 +66,7 @@ module.exports = {
         job_id: job.id,
         item: req.body.item,
         order: req.body.order,
-        pickUpDateAndTime: moment(req.body.pickUpDateAndTime).utc().format(),
+        pickUpDateAndTime: startAt,
         fulfillmentId: shopifyFulfillmentId || "",
       };
 
