@@ -1,6 +1,5 @@
 const shopifyApi = require("../configs/shopify");
 const apiClient = require("../configs/axios");
-const transporter = require("../configs/nodemailer");
 const orderDetails = require("../models/orderDetails");
 const moment = require("moment-timezone");
 
@@ -40,7 +39,7 @@ module.exports = {
       const response = await apiClient.post("/jobs", data);
       const job = response.data.data.job;
       console.log("Job created successfully:", job);
-      const customerEmail = req.body.order?.customer?.email || "";
+      // const customerEmail = req.body.order?.customer?.email || "";
 
       const shopifyReponse = await shopifyApi.create({
         fulfillmentOrders: req.body.order.fulfillmentOrders,
@@ -53,14 +52,14 @@ module.exports = {
         throw new Error(shopifyReponse.userErrors[0].message);
       }
       const shopifyFulfillmentId = shopifyReponse.fulfillment.id;
-      if (customerEmail) {
-        await transporter.sendMail({
-          from: process.env.EMAIL_FROM,
-          to: customerEmail,
-          subject: "Order Confirmation",
-          text: `Your order for ${req.body.item} has been created successfully. Your job ID is ${job.id}. Tracking url is ${job.tracking_url}.`,
-        });
-      }
+      // if (customerEmail) {
+      //   await transporter.sendMail({
+      //     from: process.env.EMAIL_FROM,
+      //     to: customerEmail,
+      //     subject: "Order Confirmation",
+      //     text: `Your order for ${req.body.item} has been created successfully. Your job ID is ${job.id}. Tracking url is ${job.tracking_url}.`,
+      //   });
+      // }
 
       const orderData = {
         job_id: job.id,

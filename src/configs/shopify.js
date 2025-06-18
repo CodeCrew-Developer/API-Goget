@@ -16,38 +16,39 @@ const shopifyApi = {
     trackingCompany,
   }) => {
     const mutation = `
-        mutation fulfillOrder($fulfillment: FulfillmentInput!) {
-                fulfillmentCreate(fulfillment: $fulfillment) {
-                        fulfillment {
-                                id
-                                status
-                                trackingInfo {
-                                        number
-                                        url
-                                        company
-                                }
-                        }
-                        userErrors {
-                                field
-                                message
-                        }
-                }
-        }
-        `;
+      mutation fulfillOrder($fulfillment: FulfillmentInput!) {
+          fulfillmentCreate(fulfillment: $fulfillment) {
+              fulfillment {
+                  id
+                  status
+                  trackingInfo {
+                      number
+                      url
+                      company
+                  }
+              }
+              userErrors {
+                  field
+                  message
+              }
+          }
+      }
+      `;
 
     try {
       const response = await shopify.post("/graphql.json", {
-        query: mutation,
-        variables: {
-          fulfillment: {
-            lineItemsByFulfillmentOrder: fulfillmentOrders,
-            trackingInfo: {
-              number: trackingNumber,
-              url: trackingUrl,
-              company: trackingCompany,
-            },
-          },
+      query: mutation,
+      variables: {
+        fulfillment: {
+        lineItemsByFulfillmentOrder: fulfillmentOrders,
+        trackingInfo: {
+          number: trackingNumber,
+          url: trackingUrl,
+          company: trackingCompany,
         },
+        notifyCustomer: true
+        },
+      },
       });
       console.log("Fulfillment created successfully:", response.data);
       return response.data?.data?.fulfillmentCreate;
@@ -83,33 +84,6 @@ const shopifyApi = {
       return response.data.data.fulfillmentCancel;
     } catch (error) {
       console.error("Error cancelling fulfillment:", error);
-      throw error;
-    }
-  },
-  getShopDetails: async () => {
-    const query = `
-        query {
-            shop {
-                id
-                name
-                email
-                myshopifyDomain
-                primaryDomain {
-                    url
-                    host
-                }
-            }
-        }
-    `;
-
-    try {
-      const response = await shopify.post("/graphql.json", {
-        query: query,
-      });
-      console.log("Shop details retrieved successfully:", response.data);
-      return response.data.data.shop;
-    } catch (error) {
-      console.error("Error retrieving shop details:", error);
       throw error;
     }
   },
