@@ -36,20 +36,22 @@ const shopifyApi = {
       `;
 
     try {
-      const response = await shopify.post("/graphql.json", {
-      query: mutation,
-      variables: {
-        fulfillment: {
-        lineItemsByFulfillmentOrder: fulfillmentOrders,
-        trackingInfo: {
-          number: trackingNumber,
-          url: trackingUrl,
-          company: trackingCompany,
+      const data = {
+        query: mutation,
+        variables: {
+          fulfillment: {
+            lineItemsByFulfillmentOrder: fulfillmentOrders,
+            trackingInfo: {
+              number: trackingNumber,
+              url: trackingUrl,
+              company: trackingCompany,
+            },
+            notifyCustomer: true,
+          },
         },
-        notifyCustomer: true
-        },
-      },
-      });
+      };
+      console.log(data,"DATA_____")
+      const response = await shopify.post("/graphql.json", data);
       console.log("Fulfillment created successfully:", response.data);
       return response.data?.data?.fulfillmentCreate;
     } catch (error) {
@@ -71,7 +73,7 @@ const shopifyApi = {
                 }
             }
         }
-        `;
+    `;
 
     try {
       const response = await shopify.post("/graphql.json", {
