@@ -190,4 +190,86 @@ module.exports = {
       console.error("Webhook error:", error);
     }
   },
+  async handleShopifyOrderWebhook(req, res) {
+  try {
+    const order = req.body;
+    console.log("Webhook received with data:", order);
+
+    // Extract core info
+    const lineItem = order.line_items[0]; // assumes one item per order
+    const shipping = order.shipping_address;
+
+    if (!shipping) throw new Error("No shipping address found.");
+
+    // Dummy pickup details (replace with real data or static values)
+    const pickUpLocation = "Warehouse, City"; // your fixed pickup location
+    const pickUpLatitude = 1.3521;
+    const pickUpLongitude = 103.8198;
+
+    const startAt = moment().tz("Asia/Singapore").utc().format();
+
+    const jobData = {
+      pickup: {
+        name: lineItem.name,
+        location: pickUpLocation,
+        location_lat: pickUpLatitude,
+        location_long: pickUpLongitude,
+        parking: false,
+        start_at: startAt,
+        reference: order.name,
+        location_notes: "Pick up from warehouse.",
+      },
+      dropoff: [
+        {
+          location: `${shipping.address1}, ${shipping.city}, ${shipping.zip}`,
+          location_lat: 0, // optional, can geocode if needed
+          location_long: 0, // optional
+          parking: false,
+          recipient_name: `${shipping.first_name} ${shipping.last_name}`,
+          recipient_phone_num: shipping.phone || "00000000",
+          sender_name: "Your Shop Name",
+          location_notes: shipping.address2 || "",
+        },
+      ],
+      ride_id: 1, // default vehicle ID
+      bulky: false,
+      reference: order.name,
+      non_halal: false,
+    };
+
+    const ggtRes = await apiClient.post("/jobs", jobData);
+    const job = ggtRes.data.data.job;
+
+    // Fetch fulfillment orders for this order (required to fulfill)
+    const fulfillmentOrders = await shopifyApi.getFulfillmentOrders(order.id);
+
+    const shopifyResponse = await shopifyApi.create({
+      fulfillmentOrders,
+      trackingNumber: job.tracking_id,
+      trackingUrl: job.tracking_url,
+      trackingCompany: "GoGet",
+    });
+
+    if (shopifyResponse.userErrors?.length) {
+      throw new Error(shopifyResponse.userErrors[0].message);
+    }
+
+    const fulfillmentId = shopifyResponse.fulfillment.id;
+
+    // Optionally, store locally
+    await orderDetails.create({
+      job_id: job.id,
+      item: lineItem.name,
+      order,
+      pickUpDateAndTime: startAt,
+      fulfillmentId,
+    });
+
+    res.status(200).json({ message: "Job and fulfillment created." });
+  } catch (error) {
+    console.error("Error processing webhook:", error);
+    res.status(500).json({ error: error?.message || "Internal error" });
+  }
+}
+
 };

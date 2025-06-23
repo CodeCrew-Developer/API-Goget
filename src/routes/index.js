@@ -14,4 +14,5 @@ router
 router.delete("/jobs/cancel/:id", controller.jobCancel);
 
 router.post("/webhook", controller.webhook);
+router.post("/goget-webhook", controller.handleShopifyOrderWebhook);
 module.exports = router;
