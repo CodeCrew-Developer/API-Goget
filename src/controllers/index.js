@@ -196,12 +196,6 @@ module.exports = {
   async handleShopifyOrderWebhook(req, res) {
     try {
       const order = req.body;
-      console.log("Webhook received with shopify data:", JSON.stringify(order));
-      fetch("https://ba02-223-182-182-207.ngrok-free.app/api/goget-webhook", {
-        body: JSON.stringify(order),
-        headers: { "ngrok-skip-browser-warning": true },
-      });
-
       // Extract core info
       const lineItem = order.line_items[0]; // assumes one item per order
       const shipping = order.shipping_address;
