@@ -204,10 +204,14 @@ module.exports = {
 
       // Dummy pickup details (replace with real data or static values)
       const pickUpLocation = "Warehouse, City"; // your fixed pickup location
-      const pickUpLatitude = 1.3521;
-      const pickUpLongitude = 103.8198;
+      const pickUpLatitude = 3.1225385;
+      const pickUpLongitude = 101.5885444;
 
-      const startAt = moment().tz("Asia/Singapore").utc().format();
+      const startAt = moment()
+        .add(5, "hours")
+        .tz("Asia/Singapore")
+        .utc()
+        .format();
 
       const jobData = {
         pickup: {
@@ -223,8 +227,8 @@ module.exports = {
         dropoff: [
           {
             location: `${shipping.address1}, ${shipping.city}, ${shipping.zip}`,
-            location_lat: 0, // optional, can geocode if needed
-            location_long: 0, // optional
+            location_lat: 3.165701700000001, // optional, can geocode if needed
+            location_long: 101.6531554, // optional
             parking: false,
             recipient_name: `${shipping.first_name} ${shipping.last_name}`,
             recipient_phone_num: shipping.phone || "00000000",
@@ -243,9 +247,10 @@ module.exports = {
 
       // Fetch fulfillment orders for this order (required to fulfill)
       const fulfillmentOrders = await shopifyApi.getFulfillmentOrders(order.id);
+      console.log("fulfillmentOrders",fulfillmentOrders)
 
       const shopifyResponse = await shopifyApi.create({
-        fulfillmentOrders,
+        fulfillmentOrders: fulfillmentOrders.formatted,
         trackingNumber: job.tracking_id,
         trackingUrl: job.tracking_url,
         trackingCompany: "GoGet",
@@ -256,19 +261,18 @@ module.exports = {
       }
 
       const fulfillmentId = shopifyResponse.fulfillment.id;
-
       // Optionally, store locally
       await orderDetails.create({
         job_id: job.id,
         item: lineItem.name,
-        order,
+        order: {...order, customer: fulfillmentOrders.customer},
         pickUpDateAndTime: startAt,
         fulfillmentId,
       });
 
       res.status(200).json({ message: "Job and fulfillment created." });
     } catch (error) {
-      console.error("Error processing webhook:", error);
+      console.error("Error processing webhook:",error?.response?.data?.data || error?.message || error);
       res.status(500).json({ error: error?.message || "Internal error" });
     }
   },
