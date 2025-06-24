@@ -197,6 +197,7 @@ module.exports = {
     try {
       const order = req.body;
       // Extract core info
+      console.log(order,":::::::::::ORDER_BODY")
       const lineItem = order.line_items[0]; // assumes one item per order
       const shipping = order.shipping_address;
 
