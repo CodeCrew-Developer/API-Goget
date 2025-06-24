@@ -9,12 +9,12 @@ const shopify = axios.create({
 });
 
 const shopifyApi = {
-getFulfillmentOrders: async (orderId) => {
+  getFulfillmentOrders: async (orderId) => {
     console.log("fulfillmentOrders", orderId);
-    
+
     // Ensure orderId is in the correct format
     const formattedOrderId = `gid://shopify/Order/${orderId}`;
-    
+
     const query = `
       query getFulfillmentOrders($id: ID!) {
         order(id: $id) {
@@ -26,11 +26,29 @@ getFulfillmentOrders: async (orderId) => {
             email
             phone
           }
+          shippingAddress {
+            formatted
+            latitude
+            longitude
+            name
+            phone
+          }
           fulfillmentOrders(first: 50) {
             nodes {
               id
               status
               requestStatus
+              assignedLocation {
+                location {
+                  address {
+                    formatted
+                    latitude
+                    longitude
+                    phone
+                  }
+                  name
+                }
+              }
               lineItems(first: 50) {
                 edges {
                   node {
@@ -48,30 +66,35 @@ getFulfillmentOrders: async (orderId) => {
           }
         }
       }
-    `;
 
+    `;
+    
     try {
       const response = await shopify.post("/graphql.json", {
         query,
         variables: { id: formattedOrderId },
       });
-
+      
       console.log("GraphQL Response:", JSON.stringify(response.data, null, 2));
-
+      
       // Check for GraphQL errors
       if (response.data.errors) {
         console.error("GraphQL errors:", response.data.errors);
-        throw new Error(`GraphQL errors: ${JSON.stringify(response.data.errors)}`);
+        throw new Error(
+          `GraphQL errors: ${JSON.stringify(response.data.errors)}`
+        );
       }
-
+      
       // Check if order exists
       if (!response.data.data || !response.data.data.order) {
         throw new Error(`Order not found with ID: ${formattedOrderId}`);
       }
-
+      
       const order = response.data.data.order;
       const customer = order.customer;
       const fulfillmentOrders = order.fulfillmentOrders?.nodes || [];
+      const shippingAddress = order.shippingAddress;
+      const storeLocation = order.fulfillmentOrders.nodes[0].assignedLocation.location;
 
       if (fulfillmentOrders.length === 0) {
         console.log("No fulfillment orders found for this order");
@@ -79,17 +102,18 @@ getFulfillmentOrders: async (orderId) => {
       }
 
       // Map to match create fulfillment input format (only allowed fields)
-      const formatted = fulfillmentOrders.filter((fo) => fo.status !== "CLOSED").map((fo) => ({
-        fulfillmentOrderId: fo.id,
-        fulfillmentOrderLineItems: fo.lineItems.edges.map((edge) => ({
-          id: edge.node.id,
-          quantity: edge.node.totalQuantity,
-        })),
-      }));
+      const formatted = fulfillmentOrders
+        .filter((fo) => fo.status !== "CLOSED")
+        .map((fo) => ({
+          fulfillmentOrderId: fo.id,
+          fulfillmentOrderLineItems: fo.lineItems.edges.map((edge) => ({
+            id: edge.node.id,
+            quantity: edge.node.totalQuantity,
+          })),
+        }));
 
       console.log("Formatted fulfillment orders:", formatted);
-      return {formatted,customer};
-      
+      return { formatted, customer, shippingAddress, storeLocation };
     } catch (error) {
       console.error("Error fetching fulfillment orders:");
       console.error("Error message:", error.message);
@@ -139,7 +163,7 @@ getFulfillmentOrders: async (orderId) => {
           },
         },
       };
-      console.log(data,"DATA_____")
+      console.log(data, "DATA_____");
       const response = await shopify.post("/graphql.json", data);
       console.log("Fulfillment created successfully:", response.data);
       return response.data?.data?.fulfillmentCreate;

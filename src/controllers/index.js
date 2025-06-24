@@ -209,30 +209,27 @@ module.exports = {
         console.log("Job and fulfillment failed");
         return res.status(400).json({ message: "Job and fulfillment failed." });
       }
-      // Extract core info
+
       console.log(order, ":::::::::::ORDER_BODY");
-      const lineItem = order.line_items[0]; // assumes one item per order
+      const lineItem = order.line_items[0];
       const shipping = order.shipping_address;
 
       if (!shipping) throw new Error("No shipping address found.");
-
-      // Dummy pickup details (replace with real data or static values)
-      const pickUpLocation = "Warehouse, City"; // your fixed pickup location
-      const pickUpLatitude = 3.1225385;
-      const pickUpLongitude = 101.5885444;
 
       const startAt = moment()
         .add(5, "hours")
         .tz("Asia/Singapore")
         .utc()
         .format();
-
+      const fulfillmentOrders = await shopifyApi.getFulfillmentOrders(order.id);
+      const shippingData = fulfillmentOrders.shippingAddress;
+      const storeData = fulfillmentOrders.storeLocation;
       const jobData = {
         pickup: {
           name: lineItem.name,
-          location: pickUpLocation,
-          location_lat: pickUpLatitude,
-          location_long: pickUpLongitude,
+          location: storeData.address.formatted.join(", "),
+          location_lat: storeData.address.latitude,
+          location_long: storeData.address.longitude,
           parking: false,
           start_at: startAt,
           reference: order.name,
@@ -241,8 +238,8 @@ module.exports = {
         dropoff: [
           {
             location: `${shipping.address1}, ${shipping.city}, ${shipping.zip}`,
-            location_lat: 3.165701700000001, // optional, can geocode if needed
-            location_long: 101.6531554, // optional
+            location_lat: shippingData.latitude,
+            location_long: shippingData.longitude,
             parking: false,
             recipient_name: `${shipping.first_name} ${shipping.last_name}`,
             recipient_phone_num: shipping.phone || "00000000",
@@ -260,7 +257,6 @@ module.exports = {
       const job = ggtRes.data.data.job;
 
       // Fetch fulfillment orders for this order (required to fulfill)
-      // const fulfillmentOrders = await shopifyApi.getFulfillmentOrders(order.id);
       // console.log("fulfillmentOrders",fulfillmentOrders)
 
       // const shopifyResponse = await shopifyApi.create({
