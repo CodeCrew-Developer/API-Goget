@@ -1,6 +1,10 @@
 const Joi = require("joi");
 
 const jobSchema = Joi.object({
+  deliveryTypeValue: Joi.string().required().messages({
+    "string.base": "deliveryTypeValue must be a string.",
+    "any.required": "deliveryTypeValue is required.",
+  }),
   item: Joi.string().required().messages({
     "string.base": "Item must be a string.",
     "any.required": "Item is required.",

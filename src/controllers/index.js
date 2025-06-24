@@ -6,6 +6,11 @@ const moment = require("moment-timezone");
 module.exports = {
   async jobCreate(req, res) {
     try {
+      if (req.body.deliveryTypeValue != "delivery") {
+        return res
+          .status(400)
+          .json({ message: "Delivery type should be 'delivery'" });
+      }
       const startAt = moment
         .tz(req.body.pickUpDateAndTime, "YYYY-MM-DD HH:mm", "Asia/Singapore")
         .utc()
@@ -196,8 +201,16 @@ module.exports = {
   async handleShopifyOrderWebhook(req, res) {
     try {
       const order = req.body;
+      const isDelivery = order.note_attributes.find(
+        i.i.name == "Checkout-Method"
+      );
+      console.log(isDelivery, "isDelivery");
+      if (isDelivery.value !== "delivery") {
+        console.log("Job and fulfillment failed");
+        return res.status(400).json({ message: "Job and fulfillment failed." });
+      }
       // Extract core info
-      console.log(order,":::::::::::ORDER_BODY")
+      console.log(order, ":::::::::::ORDER_BODY");
       const lineItem = order.line_items[0]; // assumes one item per order
       const shipping = order.shipping_address;
 
@@ -273,8 +286,14 @@ module.exports = {
 
       res.status(200).json({ message: "Job and fulfillment created." });
     } catch (error) {
-      console.error("Error processing webhook:",error?.response?.data?.data || error?.message || error);
-      res.status(500).json({ error: error?.message || "Internal error" });
+      console.error(
+        "Error processing webhook:",
+        error?.response?.data?.data || error?.message || error
+      );
+      res.status(500).json({
+        error:
+          error?.message || error?.response?.data?.data || "Internal error",
+      });
     }
   },
 };
