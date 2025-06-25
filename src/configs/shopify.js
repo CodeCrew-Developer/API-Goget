@@ -68,15 +68,15 @@ const shopifyApi = {
       }
 
     `;
-    
+
     try {
       const response = await shopify.post("/graphql.json", {
         query,
         variables: { id: formattedOrderId },
       });
-      
+
       console.log("GraphQL Response:", JSON.stringify(response.data, null, 2));
-      
+
       // Check for GraphQL errors
       if (response.data.errors) {
         console.error("GraphQL errors:", response.data.errors);
@@ -84,17 +84,18 @@ const shopifyApi = {
           `GraphQL errors: ${JSON.stringify(response.data.errors)}`
         );
       }
-      
+
       // Check if order exists
       if (!response.data.data || !response.data.data.order) {
         throw new Error(`Order not found with ID: ${formattedOrderId}`);
       }
-      
+
       const order = response.data.data.order;
       const customer = order.customer;
       const fulfillmentOrders = order.fulfillmentOrders?.nodes || [];
       const shippingAddress = order.shippingAddress;
-      const storeLocation = order.fulfillmentOrders.nodes[0].assignedLocation.location;
+      const storeLocation =
+        order.fulfillmentOrders.nodes[0].assignedLocation.location;
 
       if (fulfillmentOrders.length === 0) {
         console.log("No fulfillment orders found for this order");
@@ -129,8 +130,8 @@ const shopifyApi = {
     trackingCompany,
   }) => {
     const mutation = `
-      mutation fulfillOrder($fulfillment: FulfillmentInput!) {
-          fulfillmentCreate(fulfillment: $fulfillment) {
+      mutation fulfillOrder($fulfillment: FulfillmentV2Input!) {
+          fulfillmentCreateV2(fulfillment: $fulfillment) {
               fulfillment {
                   id
                   status
@@ -152,6 +153,7 @@ const shopifyApi = {
       const data = {
         query: mutation,
         variables: {
+          locationId: "gid://shopify/Location/80375480556",
           fulfillment: {
             lineItemsByFulfillmentOrder: fulfillmentOrders,
             trackingInfo: {
@@ -163,10 +165,22 @@ const shopifyApi = {
           },
         },
       };
-      console.log(data, "DATA_____");
+
       const response = await shopify.post("/graphql.json", data);
-      console.log("Fulfillment created successfully:", response.data);
-      return response.data?.data?.fulfillmentCreate;
+
+      const fulfillmentId =
+        response.data?.data?.fulfillmentCreateV2.fulfillment.id;
+      const shopDomain = process.env.SHOPIFY_URL;
+      const access = process.env.SHOPIFY_ACCESS;
+      // 🔔 Send notification manually (force for local delivery)
+      const restFulfillmentId = fulfillmentId.split("/").pop();
+      const restEndpoint = `${shopDomain}/admin/api/2023-10/fulfillments/${restFulfillmentId}/send_notification.json`;
+      const headers = { "X-Shopify-Access-Token": access };
+      const restResponse = await axios.post(restEndpoint, {}, { headers });
+
+      console.log("📬 Notification sent via REST:", restResponse.status);
+
+      return response.data?.data?.fulfillmentCreateV2;
     } catch (error) {
       console.error("Error creating fulfillment:", error);
       throw error;

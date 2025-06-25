@@ -83,7 +83,7 @@ module.exports = {
       console.log(error);
       res
         .status(500)
-        .json({ error: error?.response?.data?.data.errors || error.message });
+        .json({ error: error?.response?.data?.data?.errors || error.message });
     }
   },
   async jobAllGet(req, res) {
@@ -216,11 +216,14 @@ module.exports = {
 
       if (!shipping) throw new Error("No shipping address found.");
 
-      const startAt = moment()
-        .add(5, "hours")
-        .tz("Asia/Singapore")
-        .utc()
-        .format();
+      // const startAt = moment()
+      //   .add(5, "hours")
+      //   .tz("Asia/Singapore")
+      //   .utc()
+      //   .format();
+
+      const startAt = moment().add(5, "minutes").format("YYYY-MM-DD HH:mm");
+
       const fulfillmentOrders = await shopifyApi.getFulfillmentOrders(order.id);
       const shippingData = fulfillmentOrders.shippingAddress;
       const storeData = fulfillmentOrders.storeLocation;
@@ -257,28 +260,28 @@ module.exports = {
       const job = ggtRes.data.data.job;
 
       // Fetch fulfillment orders for this order (required to fulfill)
-      // console.log("fulfillmentOrders",fulfillmentOrders)
+      console.log("fulfillmentOrders", fulfillmentOrders);
 
-      // const shopifyResponse = await shopifyApi.create({
-      //   // fulfillmentOrders: fulfillmentOrders.formatted,
-      //   trackingNumber: job.tracking_id,
-      //   trackingUrl: job.tracking_url,
-      //   trackingCompany: "GoGet",
-      // });
+      const shopifyResponse = await shopifyApi.create({
+        // fulfillmentOrders: fulfillmentOrders.formatted,
+        trackingNumber: job.tracking_id,
+        trackingUrl: job.tracking_url,
+        trackingCompany: "GoGet",
+      });
 
-      // if (shopifyResponse.userErrors?.length) {
-      //   throw new Error(shopifyResponse.userErrors[0].message);
-      // }
+      if (shopifyResponse.userErrors?.length) {
+        throw new Error(shopifyResponse.userErrors[0].message);
+      }
 
-      // const fulfillmentId = shopifyResponse.fulfillment.id;
-      // // Optionally, store locally
-      // await orderDetails.create({
-      //   job_id: job.id,
-      //   item: lineItem.name,
-      //   order: {...order, customer: fulfillmentOrders.customer},
-      //   pickUpDateAndTime: startAt,
-      //   fulfillmentId,
-      // });
+      const fulfillmentId = shopifyResponse.fulfillment.id;
+      // Optionally, store locally
+      await orderDetails.create({
+        job_id: job.id,
+        item: lineItem.name,
+        order: { ...order, customer: fulfillmentOrders.customer },
+        pickUpDateAndTime: startAt,
+        fulfillmentId,
+      });
 
       res.status(200).json({ message: "Job and fulfillment created." });
     } catch (error) {
