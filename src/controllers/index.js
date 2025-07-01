@@ -201,9 +201,7 @@ module.exports = {
   async handleShopifyOrderWebhook(req, res) {
     try {
       const order = req.body;
-      const isDelivery = order.note_attributes.find(
-        i.i.name == "Checkout-Method"
-      );
+      const isDelivery = order.note_attributes.find(i=>i.name == "Checkout-Method");
       console.log(isDelivery, "isDelivery");
       if (isDelivery.value !== "delivery") {
         console.log("Job and fulfillment failed");
