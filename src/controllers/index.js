@@ -257,18 +257,15 @@ module.exports = {
       const ggtRes = await apiClient.post("/jobs", jobData);
       const job = ggtRes.data.data.job;
 
-      // Fetch fulfillment orders for this order (required to fulfill)
-      console.log("fulfillmentOrders", fulfillmentOrders);
-
       const shopifyResponse = await shopifyApi.create({
-        // fulfillmentOrders: fulfillmentOrders.formatted,
+        fulfillmentOrders: fulfillmentOrders.formatted,
         trackingNumber: job.tracking_id,
         trackingUrl: job.tracking_url,
         trackingCompany: "GoGet",
       });
 
-      if (shopifyResponse.userErrors?.length) {
-        throw new Error(shopifyResponse.userErrors[0].message);
+      if (shopifyResponse?.userErrors?.length) {
+        throw new Error(shopifyResponse?.userErrors[0].message || "Error in shopify API");
       }
 
       const fulfillmentId = shopifyResponse.fulfillment.id;
