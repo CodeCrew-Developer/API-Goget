@@ -168,18 +168,6 @@ const shopifyApi = {
 
       const response = await shopify.post("/graphql.json", data);
 
-      const fulfillmentId =
-        response.data?.data?.fulfillmentCreateV2.fulfillment.id;
-      const shopDomain = process.env.SHOPIFY_URL;
-      const access = process.env.SHOPIFY_ACCESS;
-      // 🔔 Send notification manually (force for local delivery)
-      const restFulfillmentId = fulfillmentId.split("/").pop();
-      const restEndpoint = `${shopDomain}/admin/api/2023-10/fulfillments/${restFulfillmentId}/send_notification.json`;
-      const headers = { "X-Shopify-Access-Token": access };
-      const restResponse = await axios.post(restEndpoint, {}, { headers });
-
-      console.log("📬 Notification sent via REST:", restResponse.status);
-
       return response.data?.data?.fulfillmentCreateV2;
     } catch (error) {
       console.error("Error creating fulfillment:", error);
