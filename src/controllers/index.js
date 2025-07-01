@@ -220,7 +220,7 @@ module.exports = {
       //   .utc()
       //   .format();
 
-      const startAt = moment().add(5, "minutes").format("YYYY-MM-DD HH:mm");
+      const startAt = moment().add(5, "minutes").add(3, "hours").format();
 
       const fulfillmentOrders = await shopifyApi.getFulfillmentOrders(order.id);
       const shippingData = fulfillmentOrders.shippingAddress;
