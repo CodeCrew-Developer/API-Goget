@@ -262,7 +262,7 @@ module.exports = {
             location_notes: shipping.address2 || "",
           },
         ],
-        ride_id: 1, // default vehicle ID
+        ride_id: 2, // default vehicle ID
         bulky: false,
         reference: order.name,
         non_halal: false,
