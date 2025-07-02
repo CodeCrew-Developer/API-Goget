@@ -13,8 +13,8 @@ function getDeliveryDateTimeValue(data) {
   const startTimeStr = timeRange.split(" - ")[0]; 
   const combinedStr = `${dateStr} ${startTimeStr}`;
 
-  const momentObj = moment(combinedStr, "YYYY/MM/DD h:mm A");
-  return momentObj.format(); 
+   const momentObj = moment.tz(combinedStr, "YYYY/MM/DD h:mm A", "Asia/Singapore");
+  return momentObj.utc().format(); 
 }
 module.exports = {
   async jobCreate(req, res) {
