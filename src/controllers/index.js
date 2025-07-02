@@ -2,7 +2,7 @@ const shopifyApi = require("../configs/shopify");
 const apiClient = require("../configs/axios");
 const orderDetails = require("../models/orderDetails");
 const moment = require("moment-timezone");
-
+// console.log(moment.tz("Asia/Kolkata").add(2, "hours").add(35, "minutes"), "moment");
 module.exports = {
   async jobCreate(req, res) {
     try {
@@ -220,7 +220,7 @@ module.exports = {
       //   .utc()
       //   .format();
 
-      const startAt = moment().add(2, "hours").add(30, "minutes").format("YYYY-MM-DD HH:mm");
+      const startAt = moment.tz("Asia/Kolkata").add(2, "hours").add(35, "minutes");
 
       const fulfillmentOrders = await shopifyApi.getFulfillmentOrders(order.id);
       const shippingData = fulfillmentOrders.shippingAddress;
