@@ -201,9 +201,7 @@ module.exports = {
   async handleShopifyOrderWebhook(req, res) {
     try {
       const order = req.body;
-      const isDelivery = order.note_attributes.find(
-        i.i.name == "Checkout-Method"
-      );
+      const isDelivery = order.note_attributes.find(i=>i.name == "Checkout-Method");
       console.log(isDelivery, "isDelivery");
       if (isDelivery.value !== "delivery") {
         console.log("Job and fulfillment failed");
@@ -259,18 +257,15 @@ module.exports = {
       const ggtRes = await apiClient.post("/jobs", jobData);
       const job = ggtRes.data.data.job;
 
-      // Fetch fulfillment orders for this order (required to fulfill)
-      console.log("fulfillmentOrders", fulfillmentOrders);
-
       const shopifyResponse = await shopifyApi.create({
-        // fulfillmentOrders: fulfillmentOrders.formatted,
+        fulfillmentOrders: fulfillmentOrders.formatted,
         trackingNumber: job.tracking_id,
         trackingUrl: job.tracking_url,
         trackingCompany: "GoGet",
       });
 
-      if (shopifyResponse.userErrors?.length) {
-        throw new Error(shopifyResponse.userErrors[0].message);
+      if (shopifyResponse?.userErrors?.length) {
+        throw new Error(shopifyResponse?.userErrors[0].message || "Error in shopify API");
       }
 
       const fulfillmentId = shopifyResponse.fulfillment.id;
