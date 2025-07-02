@@ -3,6 +3,19 @@ const apiClient = require("../configs/axios");
 const orderDetails = require("../models/orderDetails");
 const moment = require("moment-timezone");
 // console.log(moment.tz("Asia/Kolkata").add(2, "hours").add(35, "minutes"), "moment");
+
+function getDeliveryDateTimeValue(data) {
+  const dateStr = data.find(d => d.name === "Delivery-Date")?.value;
+  const timeRange = data.find(d => d.name === "Delivery-Time")?.value;
+
+  if (!dateStr || !timeRange) return null;
+
+  const startTimeStr = timeRange.split(" - ")[0]; 
+  const combinedStr = `${dateStr} ${startTimeStr}`;
+
+  const momentObj = moment(combinedStr, "YYYY/MM/DD h:mm A");
+  return momentObj.format(); 
+}
 module.exports = {
   async jobCreate(req, res) {
     try {
@@ -202,6 +215,7 @@ module.exports = {
     try {
       const order = req.body;
       const isDelivery = order.note_attributes.find(i=>i.name == "Checkout-Method");
+      const startAt = getDeliveryDateTimeValue(order.note_attributes)
       console.log(isDelivery, "isDelivery");
       if (isDelivery.value !== "delivery") {
         console.log("Job and fulfillment failed");
@@ -220,7 +234,7 @@ module.exports = {
       //   .utc()
       //   .format();
 
-      const startAt = moment.tz("Asia/Kolkata").add(2, "hours").add(35, "minutes");
+      // const startAt = moment.tz("Asia/Kolkata").add(2, "hours").add(35, "minutes");
 
       const fulfillmentOrders = await shopifyApi.getFulfillmentOrders(order.id);
       const shippingData = fulfillmentOrders.shippingAddress;
